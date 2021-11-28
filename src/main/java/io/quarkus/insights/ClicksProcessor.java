@@ -1,15 +1,18 @@
 package io.quarkus.insights;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
 
-import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.pgclient.PgPool;
+import io.vertx.mutiny.sqlclient.Tuple;
 
 @ApplicationScoped
 public class ClicksProcessor {
@@ -17,18 +20,23 @@ public class ClicksProcessor {
     @Inject
     Logger logger;
 
-    @Retry(maxRetries = 2)
+    @Inject
+    PgPool pgClient;
+
     @Incoming("clicks-in")
     @Outgoing("clicks-out")
-    public Uni<ClickDTO> processClick(Click click) {
-        logger.infof("Persisting click %s", click);
-        return Panache.withTransaction(() -> persist(click));
+    public Uni<List<ClickDTO>> processClick(List<Click> clicks) {
+        logger.infof("Persisting click %s", clicks);
+        return persist(clicks);
     }
 
-    private Uni<ClickDTO> persist(Click click) {
-        if (click.getXpath().equals("id(\"circle\")")) {
-            throw new IllegalArgumentException("Animation clicked");
-        }
-        return new ClickDTO(click).persist();
+    public static String sqlInsert = "INSERT INTO clicks (userId, xpath) VALUES ($1, $2)";
+
+    private Uni<List<ClickDTO>> persist(List<Click> clicks) {
+        return pgClient.withTransaction(conn ->
+                conn.preparedQuery(sqlInsert)
+                        .executeBatch(clicks.stream().map(c -> Tuple.of(c.getUserId(), c.getXpath()))
+                                .collect(Collectors.toList())))
+                .replaceWith(() -> clicks.stream().map(ClickDTO::new).collect(Collectors.toList()));
     }
 }
