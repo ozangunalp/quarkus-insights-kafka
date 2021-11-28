@@ -3,6 +3,7 @@ package io.quarkus.insights;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
@@ -16,6 +17,7 @@ public class ClicksProcessor {
     @Inject
     Logger logger;
 
+    @Retry(maxRetries = 2)
     @Incoming("clicks-in")
     @Outgoing("clicks-out")
     public Uni<ClickDTO> processClick(Click click) {
@@ -24,6 +26,9 @@ public class ClicksProcessor {
     }
 
     private Uni<ClickDTO> persist(Click click) {
+        if (click.getXpath().equals("id(\"circle\")")) {
+            throw new IllegalArgumentException("Animation clicked");
+        }
         return new ClickDTO(click).persist();
     }
 }
