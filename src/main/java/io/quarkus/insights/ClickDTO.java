@@ -3,7 +3,7 @@ package io.quarkus.insights;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.hibernate.reactive.panache.PanacheEntity;
 
 @Entity
 @Table(name = "clicks")
