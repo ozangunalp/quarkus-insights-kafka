@@ -1,0 +1,46 @@
+#circle {
+    display: none;
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background-color: lightslategray;
+    border-radius: 20px;
+    opacity: 30%;
+}
+
+.appear-animation {
+    animation-name: appear;
+    animation-duration: 600ms;
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1;
+}
+
+@keyframes appear {
+    0% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.3;
+        z-index: -1;
+    }
+    100% {
+        opacity: 0;
+        display: none;
+    }
+}
+
+*[data-count]::before {
+    content: attr(data-count);
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3;
+    overflow: hidden;
+    font-size: 1em;
+    color: black;
+    text-shadow: 0px 0px 2px black;
+    background: var(--background);
+    padding: 5px;
+}
